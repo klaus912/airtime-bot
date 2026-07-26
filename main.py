@@ -5,7 +5,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
+BOT_TOKEN = os.environ.get("BOT_TOKEN") or os.environ.get("TELEGRAM_BOT_TOKEN")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
@@ -17,11 +17,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data.clear()
         await update.message.reply_text("Cancelled. Send /start to restart.")
         return
-
-    match = re.search(r'(\d{11}).*?(\d+)', text)
-    if match:
-        phone = match.group(1)
-        amount = match.group(2)
+    m = re.search(r'(\d{11}).*?(\d+)', update.message.text)
+    if m:
+        phone = m.group(1)
+        amount = m.group(2)
         await update.message.reply_text(f"Got it!\nPhone: {phone}\nAmount: {amount}\nProcessing...")
     else:
         await update.message.reply_text("Wrong format. Use: 08012345678 500")
@@ -35,4 +34,12 @@ def run_dummy_server():
             self.wfile.write(b"Bot is running")
         def log_message(self, *args):
             pass
-    HTTPServer(('0.0.0.0', port),
+    HTTPServer(('0.0.0.0', port), Handler).serve_forever()
+
+if __name__ == "__main__":
+    Thread(target=run_dummy_server, daemon=True).start()
+    app = Application.builder().token(BOT_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    print("Bot running...")
+    app.run_polling()
