@@ -19,13 +19,13 @@ def mk(r):
 
 def kb():
  m=[]
- m+=[["Vault"]]
- m+=[["My Wallet"]]
+ m+=[["Vault ($ -> ACT)",
+ "My Wallet"]]
  m+=[["ACT Price","Staking"]]
- m+=[["Exchange"]]
+ m+=[["Exchange $ -> ACT"]]
  m+=[["Buy Airtime/Data"]]
- m+=[["Subscriptions"]]
- m+=[["Gift Cards"]]
+ m+=[["Subscriptions",
+ "Gift Cards"]]
  return mk(m)
 
 def bk():
@@ -36,13 +36,28 @@ def bw(x):
  a=x["a"]
  s=x["s"]
  v=a*AP
- t=f"ACTConnect\n\n"
- t+=f"$: {d:.2f}\n"
- t+=f"ACT: {a:.0f}\n"
- t+=f"${v:.2f}\n"
- t+=f"Staked: {s:.0f}\n"
- t+=f"Price: ${AP}\n\n"
- t+="Pick:"
+ r=1/AP
+ t="WELCOME TO\n"
+ t+="ACTCONNECT GLOBAL\n"
+ t+="Your All-in-One\n"
+ t+="Finance Hub on\n"
+ t+="Stellar Network\n\n"
+ t+="SERVICES:\n"
+ t+="1. Vault - $ to ACT\n"
+ t+="2. Exchange - $ to ACT\n"
+ t+="3. Staking - Earn ACT\n"
+ t+="4. Airtime/Data - All NW\n"
+ t+="5. Subscriptions - DSTV,\n"
+ t+=" GOTV in ACT\n"
+ t+="6. Gift Cards - Apple,\n"
+ t+=" Amazon in ACT\n\n"
+ t+="YOUR WALLET:\n"
+ t+=f"$ Balance: ${d:.2f}\n"
+ t+=f"ACT: {a:.0f} ACT\n"
+ t+=f"Value: ${v:.2f}\n"
+ t+=f"Staked: {s:.0f} ACT\n"
+ t+=f"Rate: 1$ = {r:.0f} ACT\n\n"
+ t+="Select Service Below:"
  return t
 
 async def st(u,c):
@@ -57,30 +72,40 @@ async def hd(u,c):
  k=kb()
  b=bk()
 
- if t=="Back":
+ if "Back" in t:
   c.user_data.clear()
   await u.message.reply_text(
   bw(x),reply_markup=k)
   return
 
- if t=="My Wallet":
+ if "Wallet" in t:
   await u.message.reply_text(
   bw(x),reply_markup=k)
   return
 
- if t=="ACT Price":
-  v=1/AP
-  s=f"1$={v:.0f} ACT\n"
-  s+=f"You {x['a']:.0f} ACT"
+ if "Price" in t:
+  r=1/AP
+  s="ACT PRICE INFO\n\n"
+  s+=f"1 ACT = ${AP}\n"
+  s+=f"1$ = {r:.0f} ACT\n\n"
+  s+=f"Your Balance:\n"
+  s+=f"{x['a']:.0f} ACT\n"
+  s+=f"= ${x['a']*AP:.2f}\n"
+  s+=f"Staked: {x['s']:.0f} ACT"
   await u.message.reply_text(
   s,reply_markup=k)
   return
 
- if t=="Staking":
+ if "Staking" in t:
   c.user_data["s"]="stake"
+  r=1/AP
+  s="STAKING\n\n"
+  s+=f"Staked: {x['s']:.0f} ACT\n"
+  s+=f"Available: {x['a']:.0f} ACT\n"
+  s+=f"Rate: 1$ = {r:.0f} ACT\n\n"
+  s+="Enter ACT amount to stake:"
   await u.message.reply_text(
-  "Enter ACT:",
-  reply_markup=b)
+  s,reply_markup=b)
   return
 
  if y=="stake":
@@ -89,7 +114,11 @@ async def hd(u,c):
    if x["a"]>=v:
     x["a"]-=v
     x["s"]+=v
-    s=f"Staked {v:.0f} ACT"
+    usd=v*AP
+    s=f"STAKED SUCCESS\n\n"
+    s+=f"{v:.0f} ACT Staked\n"
+    s+=f"= ${usd:.2f}\n\n"
+    s+=f"New Staked: {x['s']:.0f}"
     await u.message.reply_text(
     s,reply_markup=k)
     c.user_data.clear()
@@ -97,18 +126,25 @@ async def hd(u,c):
    pass
   return
 
- if t=="Vault":
+ if "Vault" in t:
   c.user_data["s"]="vault"
+  r=1/AP
+  s="VAULT\n$ -> ACT\n\n"
+  s+=f"Rate: 1$ = {r:.0f} ACT\n"
+  s+=f"$ Balance: ${x['d']:.2f}\n\n"
+  s+="Enter $ amount:"
   await u.message.reply_text(
-  "Enter $:",
-  reply_markup=b)
+  s,reply_markup=b)
   return
 
- if t=="Exchange":
+ if "Exchange" in t:
   c.user_data["s"]="vault"
+  r=1/AP
+  s="EXCHANGE\n$ -> ACT\n\n"
+  s+=f"Rate: 1$ = {r:.0f} ACT\n\n"
+  s+="Enter $ amount:"
   await u.message.reply_text(
-  "Enter $:",
-  reply_markup=b)
+  s,reply_markup=b)
   return
 
  if y=="vault":
@@ -118,7 +154,11 @@ async def hd(u,c):
     x["d"]-=v
     act=v/AP
     x["a"]+=act
-    s=f"${v}={act:.0f} ACT"
+    s="CONVERTED\n\n"
+    s+=f"${v:.2f} ->\n"
+    s+=f"{act:.0f} ACT\n\n"
+    s+=f"Rate: 1$={1/AP:.0f} ACT\n"
+    s+=f"New ACT: {x['a']:.0f}"
     await u.message.reply_text(
     s,reply_markup=k)
     c.user_data.clear()
@@ -126,38 +166,52 @@ async def hd(u,c):
    pass
   return
 
- if t=="Buy Airtime/Data":
+ if "Airtime" in t:
   c.user_data["s"]="air_nw"
   m=[]
   m+=[["MTN","Airtel"]]
   m+=[["Glo","9mobile"]]
   m+=[["Back"]]
+  s="AIRTIME/DATA\n\n"
+  s+="All Networks in ACT\n"
+  s+="Rate: 1000 NGN=\n"
+  s+="$0.66=712 ACT\n\n"
+  s+="Select Network:"
   await u.message.reply_text(
-  "Pick Network:",
-  reply_markup=mk(m))
+  s,reply_markup=mk(m))
   return
 
  if y=="air_nw":
   c.user_data["nw"]=t
   c.user_data["s"]="air_am"
+  s=f"{t} AIRTIME\n\n"
+  s+="Pay with ACT Token\n"
+  s+="Rate:\n"
+  s+="1000 NGN=712 ACT\n\n"
+  s+="Enter: phone amount\n"
+  s+="e.g 08031234567 1000"
   await u.message.reply_text(
-  "phone amount\n"
-  "e.g 0803 1000",
-  reply_markup=b)
+  s,reply_markup=b)
   return
 
  if y=="air_am":
   try:
    p=t.split()
    am=float(p[-1])
+   ph=p[0]
    usd=am/1500
    act=usd/AP
    if x["a"]>=act:
     x["a"]-=act
-    s=f"{c.user_data['nw']}"
-    s+=f" {am} OK\n"
-    s+=f"${usd:.2f}="
-    s+=f"{act:.0f} ACT"
+    s="AIRTIME SUCCESS\n\n"
+    s+=f"Network: {c.user_data['nw']}\n"
+    s+=f"Phone: {ph}\n"
+    s+=f"Amount: {am:.0f} NGN\n\n"
+    s+=f"PAID WITH ACT:\n"
+    s+=f"{act:.0f} ACT\n"
+    s+=f"= ${usd:.2f}\n"
+    s+=f"= {am:.0f} NGN\n\n"
+    s+=f"Bal: {x['a']:.0f} ACT"
     await u.message.reply_text(
     s,reply_markup=k)
     c.user_data.clear()
@@ -165,14 +219,21 @@ async def hd(u,c):
    pass
   return
 
- if t=="Subscriptions":
+ if "Subscriptions" in t:
   c.user_data["s"]="sub"
   m=[]
-  m+=[["DSTV","GOTV"]]
+  m+=[["DSTV - 9636 ACT"]]
+  m+=[["GOTV - 9636 ACT"]]
   m+=[["Back"]]
+  s="SUBSCRIPTIONS\n"
+  s+="Pay with ACT Token\n\n"
+  s+="DSTV Premium:\n"
+  s+="9636 ACT = $9\n\n"
+  s+="GOTV Max:\n"
+  s+="9636 ACT = $9\n\n"
+  s+="Select Package:"
   await u.message.reply_text(
-  "Pick Sub $9",
-  reply_markup=mk(m))
+  s,reply_markup=mk(m))
   return
 
  if y=="sub":
@@ -180,22 +241,32 @@ async def hd(u,c):
   act=usd/AP
   if x["a"]>=act:
    x["a"]-=act
-   s=f"{t} Paid\n"
-   s+=f"$9={act:.0f} ACT"
+   s="SUB SUCCESS\n\n"
+   s+=f"Package: {t}\n\n"
+   s+=f"PAID WITH ACT:\n"
+   s+=f"{act:.0f} ACT\n"
+   s+=f"= ${usd}\n\n"
+   s+=f"Bal: {x['a']:.0f} ACT"
    await u.message.reply_text(
    s,reply_markup=k)
    c.user_data.clear()
   return
 
- if t=="Gift Cards":
+ if "Gift" in t:
   c.user_data["s"]="gift"
   m=[]
-  m+=[["Apple $10"]]
-  m+=[["Amazon $10"]]
+  m+=[["Apple $10 - 10706 ACT"]]
+  m+=[["Amazon $10 - 10706 ACT"]]
   m+=[["Back"]]
+  s="GIFT CARDS\n"
+  s+="Pay with ACT Token\n\n"
+  s+="Apple $10:\n"
+  s+="10706 ACT = $10\n\n"
+  s+="Amazon $10:\n"
+  s+="10706 ACT = $10\n\n"
+  s+="Select Card:"
   await u.message.reply_text(
-  "Pick Card $10",
-  reply_markup=mk(m))
+  s,reply_markup=mk(m))
   return
 
  if y=="gift":
@@ -203,8 +274,13 @@ async def hd(u,c):
   act=usd/AP
   if x["a"]>=act:
    x["a"]-=act
-   s=f"{t} Code XXXX\n"
-   s+=f"$10={act:.0f} ACT"
+   s="GIFT CARD SUCCESS\n\n"
+   s+=f"Card: {t}\n"
+   s+="Code: XXXX-XXXX-1234\n\n"
+   s+=f"PAID WITH ACT:\n"
+   s+=f"{act:.0f} ACT\n"
+   s+=f"= ${usd}\n\n"
+   s+=f"Bal: {x['a']:.0f} ACT"
    await u.message.reply_text(
    s,reply_markup=k)
    c.user_data.clear()
