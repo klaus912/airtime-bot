@@ -1,7 +1,7 @@
-import os, logging, threading, random, re
+import os, logging, threading, random
 from flask import Flask
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 logging.basicConfig(level=logging.INFO)
@@ -10,7 +10,6 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     return "ACTConnect Global LIVE"
-
 def run_flask():
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
@@ -18,21 +17,6 @@ def run_flask():
 ACT_PRICE = 0.00093367
 STAKING_APY = 15
 users = {}
-GIFT_RATES = {"Amazon": 1450, "Steam": 1350, "iTunes": 1300, "Google Play": 1250, "Walmart": 1400}
-DATA_PLANS = {
-    "mtn": ["500MB - N300", "1GB - N500", "2GB - N1000", "5GB - N2500"],
-    "glo": ["1GB - N400", "2.5GB - N900", "5GB - N1800"],
-    "airtel": ["1GB - N500", "2GB - N1000", "6GB - N2500"],
-    "9mobile": ["1GB - N600", "3GB - N1500"]
-}
-SUBS = {
-    "Netflix": {"1 Month - N5500": 5500, "3 Months - N15000": 15000},
-    "Spotify": {"1 Month - N1500": 1500, "3 Months - N4000": 4000},
-    "YouTube Premium": {"1 Month - N1800": 1800, "Duo - N2500": 2500},
-    "Apple Music": {"1 Month - N1500": 1500, "6 Months - N7500": 7500},
-    "Showmax": {"1 Month - N3500": 3500, "Mobile - N1800": 1800},
-    "DSTV/GOTV": {"GOTV Smallie - N1900": 1900, "DSTV Compact - N13500": 13500}
-}
 
 def get_user(uid):
     if uid not in users:
@@ -40,17 +24,11 @@ def get_user(uid):
     return users[uid]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    uid = update.effective_user.id
-    u = get_user(uid)
+    u = get_user(update.effective_user.id)
     msg = (
-        f"Welcome to ACTConnect Global 🌍\n"
-        f"Your All-in-One Finance Hub on Stellar Blockchain\n\n"
-        f"Your Wallet:\n"
-        f" Dollar: ${u['usd']:.2f}\n"
-        f" ACT: {u['act']:.2f} (~${u['act']*ACT_PRICE:.6f})\n"
-        f" Staked: {u['staked']:.2f} ACT\n"
-        f"ACT Price: ${ACT_PRICE:.6f} | APY: {STAKING_APY}%\n\n"
-        f"Select Service Below:"
+        f"Welcome to ACTConnect Global 🌍\nYour All-in-One Finance Hub on Stellar Blockchain\n\n"
+        f"Your Wallet:\n Dollar: ${u['usd']:.2f}\n ACT: {u['act']:.2f} (~${u['act']*ACT_PRICE:.6f})\n"
+        f" Staked: {u['staked']:.2f} ACT\nACT Price: ${ACT_PRICE:.6f} | APY: {STAKING_APY}%\n\nSelect Service Below:"
     )
     kb = [
         [InlineKeyboardButton("Vault ($ -> ACT)", callback_data='vault'), InlineKeyboardButton("My Wallet", callback_data='wallet')],
@@ -67,30 +45,29 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     data = query.data
-    uid = update.effective_user.id
-    u = get_user(uid)
+    u = get_user(update.effective_user.id)
+    act_per_usdc = 1 / ACT_PRICE
 
     if data == 'price':
-        # 1 ACT = 0.00093367 USDC, 1 USDC = ~1071 ACT
-        usdc_per_act = ACT_PRICE
-        act_per_usdc = 1 / ACT_PRICE
         await query.edit_message_text(
-            f"💰 ACT Live Price\n\n"
-            f"1 ACT = ${usdc_per_act:.8f} USDC\n"
-            f"1 USDC = {act_per_usdc:.2f} ACT\n\n"
-            f"Source: Stellar DEX\n"
-            f"Issuer: GAHHUL...3FS7",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data='back_home')]])
-        )
+            f"💰 ACT Live Price\n\n1 ACT = ${ACT_PRICE:.8f} USDC\n1 USDC = {act_per_usdc:.2f} ACT\n\nSource: Stellar DEX\nIssuer: GAHHUL...3FS7",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data='back_home')]]))
     elif data == 'wallet':
         await query.edit_message_text(
-            f"👛 Wallet\nDollar: ${u['usd']:.2f}\nACT: {u['act']:.2f}\nStaked: {u['staked']:.2f}",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data='back_home')]])
-        )
+            f"👛 Wallet\n\nStellar: {u['stellar']}\nUSD: ${u['usd']:.2f}\nACT: {u['act']:.2f} (~${u['act']*ACT_PRICE:.6f})\nStaked: {u['staked']:.2f}\nNetwork: Stellar Mainnet",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data='back_home')]]))
+    elif data == 'exchange' or data == 'vault':
+        await query.edit_message_text(
+            f"EXCHANGE $ -> ACT\nRate: 1 ACT = ${ACT_PRICE:.8f}\nRate: 1 USDC = {act_per_usdc:.2f} ACT\nYour $: ${u['usd']:.2f}\n\nSend amount e.g 50",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data='back_home')]]))
+    elif data == 'staking':
+        await query.edit_message_text(
+            f"Staking\nAPY: {STAKING_APY}%\nYour Staked: {u['staked']:.2f} ACT\nPrice: ${ACT_PRICE:.6f}\n\nSend amount to stake",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data='back_home')]]))
     elif data == 'back_home':
         await start(update, context)
     else:
-        await query.edit_message_text(f"You clicked {data}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data='back_home')]]))
+        await query.edit_message_text(f"{data} - Coming soon! Price: ${ACT_PRICE:.6f}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data='back_home')]]))
 
 def main():
     threading.Thread(target=run_flask, daemon=True).start()
