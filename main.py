@@ -15,7 +15,7 @@ def run_flask():
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
 
-ACT_PRICE = 0.085
+ACT_PRICE = 0.00093367
 STAKING_APY = 15
 users = {}
 GIFT_RATES = {"Amazon": 1450, "Steam": 1350, "iTunes": 1300, "Google Play": 1250, "Walmart": 1400, "eBay": 1380, "Vanilla": 1420}
