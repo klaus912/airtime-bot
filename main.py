@@ -32,6 +32,9 @@ def kb():
  "Gift Cards"]]
  return mk(m)
 
+def bk():
+ return mk([["Back"]])
+
 def bw(x):
  d=x["d"]
  a=x["a"]
@@ -62,60 +65,97 @@ async def st(u,c):
 async def hd(u,c):
  t=u.message.text
  x=gu(u.effective_user.id)
+ y=c.user_data.get("s")
  k=kb()
+ b=bk()
+
+ if t=="Back":
+  c.user_data.clear()
+  s=bw(x)
+  await u.message.reply_text(
+  s,reply_markup=k)
+  return
+
  if t=="My Wallet":
   s=bw(x)
   await u.message.reply_text(
   s,reply_markup=k)
   return
+
  if t=="ACT Price":
-  s=f"ACT Price: ${AP}"
+  v=1/AP
+  s=f"ACT Price: ${AP}\n"
+  s+=f"1$ = {v:.0f} ACT\n"
+  s+=f"You: {x['a']:.0f} ACT\n"
+  s+=f"= ${x['a']*AP:.2f}"
   await u.message.reply_text(
   s,reply_markup=k)
   return
- if t=="Vault ($ -> ACT)":
-  c.user_data["s"]="vault"
+
+ if t=="Staking":
+  c.user_data["s"]="stake"
+  s="Staking\n"
+  s+=f"Staked: {x['s']:.0f}\n"
+  s+="Enter ACT\n"
+  s+="to stake:"
   await u.message.reply_text(
-  "Enter $ amount:")
+  s,reply_markup=b)
   return
- if c.user_data.get("s")=="vault":
+
+ if y=="stake":
   try:
    v=float(t)
-   if x["d"]>=v:
-    x["d"]-=v
-    x["a"]+=v/AP
-    s=bw(x)
+   if x["a"]>=v:
+    x["a"]-=v
+    x["s"]+=v
+    usd=v*AP
+    s=f"Staked {v:.0f} ACT\n"
+    s+=f"= ${usd:.4f}"
     await u.message.reply_text(
     s,reply_markup=k)
     c.user_data.clear()
   except:
    pass
   return
- s=bw(x)
- await u.message.reply_text(
- s,reply_markup=k)
 
-fa=Flask(__name__)
-@fa.route('/')
-def hm():
- return "Live"
+ if t=="Vault ($ -> ACT)":
+  c.user_data["s"]="vault"
+  await u.message.reply_text(
+  "Enter $ to convert\n"
+  "to ACT:",
+  reply_markup=b)
+  return
 
-def rf():
- fa.run(
- host='0.0.0.0',port=P)
+ if t=="Exchange $ -> ACT":
+  c.user_data["s"]="vault"
+  await u.message.reply_text(
+  "Enter $ to convert\n"
+  "to ACT:",
+  reply_markup=b)
+  return
 
-A=ApplicationBuilder
-ap=A().token(T).build()
-c1=CommandHandler(
- "start",st)
-ap.add_handler(c1)
-h=MessageHandler(
- filters.TEXT,hd)
-ap.add_handler(h)
+ if y=="vault":
+  try:
+   v=float(t)
+   if x["d"]>=v:
+    x["d"]-=v
+    act=v/AP
+    x["a"]+=act
+    s=f"Converted ${v}\n"
+    s+=f"= {act:.0f} ACT\n"
+    s+=f"Rate: ${AP}"
+    await u.message.reply_text(
+    s,reply_markup=k)
+    c.user_data.clear()
+  except:
+   pass
+  return
 
-if __name__=="__main__":
- th=threading.Thread
- th(
- target=rf,
- daemon=True).start()
- ap.run_polling()
+ if t=="Buy Airtime/Data":
+  c.user_data["s"]="air_nw"
+  m=[]
+  m+=[["MTN","Airtel"]]
+  m+=[["Glo","9mobile"]]
+  m+=[["Back"]]
+  await u.message.reply_text(
+  "Pick
