@@ -5,100 +5,95 @@ from telegram.ext import *
 K=ReplyKeyboardMarkup
 T=os.getenv("BOT_TOKEN")
 P=int(os.getenv("PORT",10000))
-R=850
+AP=0.00093367
 U={}
 
 def gu(i):
  if i not in U:
-  U[i]={"a":5000,"u":100}
+  U[i]={
+  "d":100.0,
+  "a":1125.14,
+  "s":0.0}
  return U[i]
 
 def mk(r):
  return K(r,True)
 
 def kb():
- m=[["Cards","Bills"]]
- m+=[["Vault","Wallet"]]
- m+=[["Price"]]
+ m=[]
+ m+=[["Vault ($ -> ACT)",
+ "My Wallet"]]
+ m+=[["ACT Price",
+ "Staking"]]
+ a="Exchange $ -> ACT"
+ b="Buy Airtime/Data"
+ m+=[[a,b]]
+ m+=[["Subscriptions",
+ "Gift Cards"]]
  return mk(m)
 
+def bw(x):
+ d=x["d"]
+ a=x["a"]
+ s=x["s"]
+ v=a*AP
+ t="Welcome to ACTConnect"
+ t+=" Global 🌍\n"
+ t+="Your All-in-One\n"
+ t+="Finance Hub on\n"
+ t+="Stellar\n\n"
+ t+="Your Wallet:\n"
+ t+=f"$: ${d:.2f}\n"
+ t+=f"ACT: {a:.2f}\n"
+ t+=f"(~${v:.4f})\n"
+ t+=f"Staked: {s:.2f}\n"
+ t+="ACT Price: "
+ t+=f"${AP}\n\n"
+ t+="Select Service:"
+ return t
+
 async def st(u,c):
- c.user_data.clear()
  x=gu(u.effective_user.id)
- s=f"ACT:{x['a']}"
  k=kb()
+ s=bw(x)
  await u.message.reply_text(
  s,reply_markup=k)
 
 async def hd(u,c):
  t=u.message.text
  x=gu(u.effective_user.id)
- y=c.user_data.get("s")
- if t=="Wallet":
-  s=f"{x['a']} ACT"
-  k=kb()
+ k=kb()
+ if t=="My Wallet":
+  s=bw(x)
   await u.message.reply_text(
   s,reply_markup=k)
   return
- if t=="Price":
-  s=f"1$={R}"
-  k=kb()
+ if t=="ACT Price":
+  s=f"ACT Price: ${AP}"
   await u.message.reply_text(
   s,reply_markup=k)
   return
- if t=="Cards":
-  r=[["Apple"],["Back"]]
-  k=mk(r)
+ if t=="Vault ($ -> ACT)":
+  c.user_data["s"]="vault"
   await u.message.reply_text(
-  "Pick",reply_markup=k)
+  "Enter $ amount:")
   return
- if t=="Bills":
-  r=[["DSTV"],["Back"]]
-  k=mk(r)
-  await u.message.reply_text(
-  "Pick",reply_markup=k)
-  return
- if t=="Back":
-  c.user_data.clear()
-  k=kb()
-  await u.message.reply_text(
-  "Menu",reply_markup=k)
-  return
- if t=="Vault":
-  c.user_data["s"]="v"
-  s=f"$1={R}"
-  await u.message.reply_text(s)
-  return
- if y=="v":
+ if c.user_data.get("s")=="vault":
   try:
    v=float(t)
-   if x["u"]>=v:
-    x["u"]-=v
-    x["a"]+=v*R
-    s=f"+{v*R} ACT"
-    k=kb()
+   if x["d"]>=v:
+    x["d"]-=v
+    x["a"]+=v/AP
+    s=bw(x)
     await u.message.reply_text(
     s,reply_markup=k)
     c.user_data.clear()
   except:
    pass
   return
- if t=="Apple":
-  p=10*R
-  if x["a"]>=p:
-   x["a"]-=p
-   k=kb()
-   await u.message.reply_text(
-   "PAID",reply_markup=k)
-  return
- if t=="DSTV":
-  p=9*R
-  if x["a"]>=p:
-   x["a"]-=p
-   k=kb()
-   await u.message.reply_text(
-   "PAID",reply_markup=k)
-  return
+ s=bw(x)
+ await u.message.reply_text(
+ s,reply_markup=k)
 
 fa=Flask(__name__)
 @fa.route('/')
